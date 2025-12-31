@@ -1,0 +1,138 @@
+/* ===== AUTH STYLES ===== */
+
+/* ===== CARD ===== */
+.auth-card {
+  width: 100%;
+}
+
+/* ===== HEADERS ===== */
+.auth-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.auth-subtitle {
+  color: #6b7280;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+/* ===== FORM ===== */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #10b981;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.auth-form input::placeholder {
+  color: #9ca3af;
+}
+
+.auth-form button {
+  margin-top: 8px;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.auth-form button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.auth-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== GRID (Signup) ===== */
+.auth-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+/* ===== FOOTER ===== */
+.auth-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.auth-footer a {
+  color: #10b981;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.auth-footer a:hover {
+  color: #059669;
+  text-decoration: underline;
+}
+
+/* ===== ERROR ===== */
+.auth-error {
+  color: #ef4444;
+  text-align: center;
+  margin-bottom: 10px;
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* ===== DIVIDER ===== */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* ===== TABLET & UP ===== */
+@media (min-width: 640px) {
+  .auth-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

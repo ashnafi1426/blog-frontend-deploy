@@ -1,0 +1,24 @@
+.post-card {
+  background-color: #014a01;
+  /* Subtle light gray, similar to Medium */
+  padding: 1.5rem;
+  /* 24px */
+  border-radius: 1rem;
+  /* 16px */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.post-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+.post-card {
+  background-color: rgb(131, 24, 189);
+  /* light gray */
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.post-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
