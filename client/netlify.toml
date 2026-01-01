@@ -6,3 +6,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[env]
+  VITE_API_URL = "https://blog-backend-6eal.onrender.com"
