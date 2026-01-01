@@ -34,7 +34,6 @@ function App() {
         <Route path="profile/:id" element={<Profile />} />
         <Route path="topic/:slug" element={<Topic />} />
       </Route>
-
       {/* Auth pages */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />

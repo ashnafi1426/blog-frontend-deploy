@@ -28,18 +28,37 @@ const PublicLayout = () => {
             >
               Our story
             </Link>
-            <Link
-              to="/membership"
-              className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Membership
-            </Link>
-            <Link
-              to="/write"
-              className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Write
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Membership
+                </Link>
+                <Link
+                  to="/new-story"
+                  className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-semibold"
+                >
+                  Write
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate("/signup")}
+                  className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Membership
+                </button>
+                <button
+                  onClick={() => navigate("/signup")}
+                  className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-semibold"
+                >
+                  Write
+                </button>
+              </>
+            )}
 
             {/* Theme toggle */}
             <button

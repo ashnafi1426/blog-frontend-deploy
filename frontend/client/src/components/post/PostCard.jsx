@@ -20,9 +20,9 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
 
   // Different card styles based on variant
   const cardStyles = {
-    default: "bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300",
-    featured: "bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300",
-    minimal: "bg-gray-50 border border-gray-100 rounded-xl p-5 hover:bg-white hover:shadow-md transition-all duration-300",
+    default: "bg-gray-900 border border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300",
+    featured: "bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-700 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300",
+    minimal: "bg-gray-800 border border-gray-700 rounded-xl p-5 hover:bg-gray-750 hover:shadow-md transition-all duration-300",
   };
 
   return (
@@ -51,11 +51,11 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
           <div>
             <Link 
               to={`/profile/${author.user_id}`}
-              className="font-semibold text-gray-900 hover:text-green-600 transition block"
+              className="font-semibold text-white hover:text-green-400 transition block"
             >
               {author.display_name || author.username}
             </Link>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-400">
               {formatDate(post.published_at || post.created_at)}
             </span>
           </div>
@@ -64,14 +64,14 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
 
       {/* Title */}
       <Link to={`/post/${post.post_id}`}>
-        <h2 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors line-clamp-2">
+        <h2 className="text-xl font-bold text-white mb-2 group-hover:text-green-400 transition-colors line-clamp-2">
           {post.title || "Untitled"}
         </h2>
       </Link>
 
       {/* Subtitle or preview */}
       <Link to={`/post/${post.post_id}`}>
-        <p className="text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+        <p className="text-gray-300 mb-4 line-clamp-2 leading-relaxed">
           {post.subtitle || getPreview(post.content)}
         </p>
       </Link>
@@ -83,7 +83,7 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
             <Link 
               key={topic.topic_id || topic.slug}
               to={`/topic/${topic.slug}`}
-              className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full hover:bg-green-100 hover:text-green-700 transition"
+              className="px-3 py-1 bg-gray-700 text-gray-200 text-xs font-medium rounded-full hover:bg-green-600 hover:text-white transition"
             >
               {topic.name}
             </Link>
@@ -92,15 +92,15 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div className="flex items-center gap-4 text-sm text-gray-500">
+      <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+        <div className="flex items-center gap-4 text-sm text-gray-400">
           <span className="flex items-center gap-1">
             <FaRegClock size={14} />
             {post.reading_time || 1} min
           </span>
           <Link 
             to={`/post/${post.post_id}#comments`}
-            className="flex items-center gap-1 hover:text-green-600 transition"
+            className="flex items-center gap-1 hover:text-green-400 transition"
           >
             <FaRegComment size={14} />
             {post.comments_count || 0}
