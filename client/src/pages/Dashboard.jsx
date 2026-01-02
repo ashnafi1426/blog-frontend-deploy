@@ -11,7 +11,6 @@ import {
   FaChartLine, FaHeart, FaEye, FaComment, FaArrowRight,
   FaHome, FaHashtag, FaUserPlus
 } from "react-icons/fa";
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
