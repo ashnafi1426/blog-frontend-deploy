@@ -1,23 +1,28 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import PostList from "../components/post/PostList";
-import { getUserProfile } from "../services/userService";
+import FollowButton from "../components/ui/FollowButton";
+import { getUserProfile, getUserPosts, getUserStats } from "../services/userService";
 import { getAllPostsDB, getFeedDB } from "../services/postService";
 import { getTrendingTopics } from "../services/topicService";
+import { getFollowCounts, getFollowing, followUser } from "../services/followService";
 import { 
   FaPen, FaBookmark, FaFileAlt, FaCog, FaFire, FaUsers, 
   FaChartLine, FaHeart, FaEye, FaComment, FaArrowRight,
-  FaHome, FaHashtag
+  FaHome, FaHashtag, FaUserPlus
 } from "react-icons/fa";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [userPostsCount, setUserPostsCount] = useState(0);
   const [trendingTopics, setTrendingTopics] = useState([]);
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("for-you");
   const [stats, setStats] = useState({ views: 0, likes: 0, comments: 0 });
+  const [followingUsers, setFollowingUsers] = useState([]);
 
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userId");
@@ -31,22 +36,66 @@ const Dashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [user, allPosts, topics] = await Promise.all([
-          getUserProfile(userId, token),
-          activeTab === "following" ? getFeedDB(token) : getAllPostsDB(),
-          getTrendingTopics(8)
+        // Fetch following users first
+        const followingData = await getFollowing(userId, token).catch(() => []);
+        const followingUserIds = followingData?.map(u => u.user_id) || [];
+        setFollowingUsers(followingUserIds);
+
+        // Fetch posts based on active tab
+        let postsData = [];
+        try {
+          if (activeTab === "following") {
+            // For "Following" tab, get feed from users they follow
+            postsData = await getFeedDB(token);
+          } else {
+            // For "For You" tab, get all posts
+            postsData = await getAllPostsDB();
+          }
+        } catch (postError) {
+          console.error("Error fetching posts:", postError);
+          postsData = [];
+        }
+
+        // Fetch other data
+        const [user, userPosts, topics] = await Promise.all([
+          getUserProfile(userId, token).catch(err => {
+            console.error("Error fetching user profile:", err);
+            return null;
+          }),
+          getUserPosts(userId, token).catch(err => {
+            console.error("Error fetching user posts:", err);
+            return [];
+          }),
+          getTrendingTopics(8).catch(err => {
+            console.error("Error fetching trending topics:", err);
+            return [];
+          })
         ]);
 
         setProfile(user);
-        setPosts(allPosts || []);
+        setPosts(Array.isArray(postsData) ? postsData : []);
         setTrendingTopics(topics || []);
         
-        const totalViews = allPosts?.reduce((sum, p) => sum + (p.views_count || 0), 0) || 0;
-        const totalLikes = allPosts?.reduce((sum, p) => sum + (p.claps_count || 0), 0) || 0;
-        const totalComments = allPosts?.reduce((sum, p) => sum + (p.comments_count || 0), 0) || 0;
-        setStats({ views: totalViews, likes: totalLikes, comments: totalComments });
+        // Use stats from user profile
+        console.log("User profile with stats:", user);
+        const userStats = user?.stats || {};
+        setStats({ 
+          views: userStats.totalViews || 0, 
+          likes: userStats.totalClaps || 0, 
+          comments: userStats.totalComments || 0 
+        });
+        setUserPostsCount(userStats.totalPosts || 0);
+
+        // Get suggested users (users with most followers, excluding current user and already following)
+        const allUsers = (Array.isArray(postsData) ? postsData : [])?.map(p => p.users).filter(Boolean) || [];
+        const uniqueUsers = Array.from(new Map(allUsers.map(u => [u.user_id, u])).values());
+        const suggested = uniqueUsers
+          .filter(u => u.user_id !== userId && !followingUserIds.includes(u.user_id))
+          .slice(0, 5);
+        setSuggestedUsers(suggested);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
+        setPosts([]);
       } finally {
         setLoading(false);
       }
@@ -54,6 +103,16 @@ const Dashboard = () => {
 
     fetchData();
   }, [token, userId, navigate, activeTab]);
+
+  const handleFollowUser = async (targetUserId) => {
+    try {
+      await followUser(targetUserId, token);
+      setFollowingUsers([...followingUsers, targetUserId]);
+      setSuggestedUsers(suggestedUsers.filter(u => u.user_id !== targetUserId));
+    } catch (err) {
+      console.error("Failed to follow user:", err);
+    }
+  };
 
   if (loading) {
     return (
@@ -137,25 +196,46 @@ const Dashboard = () => {
             <div className="p-4 border-t border-gray-100">
               <p className="px-1 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Your Stats</p>
               <div className="grid grid-cols-2 gap-2">
-                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                <div className="bg-blue-50 rounded-lg p-3 text-center hover:bg-blue-100 transition">
                   <FaEye className="mx-auto text-blue-500 mb-1" size={16} />
                   <p className="text-lg font-bold text-gray-900">{stats.views}</p>
                   <p className="text-xs text-gray-500">Views</p>
                 </div>
-                <div className="bg-red-50 rounded-lg p-3 text-center">
+                <div className="bg-red-50 rounded-lg p-3 text-center hover:bg-red-100 transition">
                   <FaHeart className="mx-auto text-red-500 mb-1" size={16} />
                   <p className="text-lg font-bold text-gray-900">{stats.likes}</p>
                   <p className="text-xs text-gray-500">Claps</p>
                 </div>
-                <div className="bg-green-50 rounded-lg p-3 text-center">
+                <div className="bg-green-50 rounded-lg p-3 text-center hover:bg-green-100 transition">
                   <FaComment className="mx-auto text-green-500 mb-1" size={16} />
                   <p className="text-lg font-bold text-gray-900">{stats.comments}</p>
                   <p className="text-xs text-gray-500">Comments</p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-3 text-center">
+                <div className="bg-purple-50 rounded-lg p-3 text-center hover:bg-purple-100 transition">
                   <FaFileAlt className="mx-auto text-purple-500 mb-1" size={16} />
-                  <p className="text-lg font-bold text-gray-900">{posts.length}</p>
+                  <p className="text-lg font-bold text-gray-900">{userPostsCount}</p>
                   <p className="text-xs text-gray-500">Stories</p>
+                </div>
+              </div>
+            </div>
+
+            {/* User Status */}
+            <div className="p-4 border-t border-gray-100">
+              <p className="px-1 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Account Status</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <span className="text-sm text-gray-600">Email</span>
+                  <span className="text-sm font-medium text-gray-900 truncate">{profile?.email}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <span className="text-sm text-gray-600">Member Since</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : "N/A"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg border border-green-200">
+                  <span className="text-sm text-green-700 font-medium">✓ Active</span>
+                  <span className="text-xs text-green-600">Online</span>
                 </div>
               </div>
             </div>
@@ -225,6 +305,51 @@ const Dashboard = () => {
         {/* Right Sidebar - Fixed */}
         <aside className="hidden xl:block w-80 flex-shrink-0">
           <div className="fixed top-16 right-0 w-80 h-[calc(100vh-4rem)] bg-transparent overflow-y-auto p-4">
+            {/* Suggested Users */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
+              <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FaUserPlus className="text-blue-500" size={16} />
+                  <h3 className="font-semibold text-gray-900">People to Follow</h3>
+                </div>
+              </div>
+              <div className="p-4">
+                {suggestedUsers.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No suggestions available</p>
+                ) : (
+                  <div className="space-y-3">
+                    {suggestedUsers.map((user) => (
+                      <div key={user.user_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <Link to={`/profile/${user.user_id}`} className="flex items-center gap-2 flex-1 min-w-0">
+                          <img
+                            src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
+                            alt={user.username}
+                            className="w-8 h-8 rounded-full"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {user.display_name || user.username}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">@{user.username}</p>
+                          </div>
+                        </Link>
+                        <FollowButton 
+                          userId={user.user_id}
+                          size="sm"
+                          onFollowChange={(isFollowing) => {
+                            if (isFollowing) {
+                              setFollowingUsers([...followingUsers, user.user_id]);
+                              setSuggestedUsers(suggestedUsers.filter(u => u.user_id !== user.user_id));
+                            }
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Trending Topics */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-4 overflow-hidden">
               <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
@@ -264,16 +389,24 @@ const Dashboard = () => {
                 <h3 className="font-bold text-gray-900 mt-2">
                   {profile?.display_name || profile?.firstname || profile?.username}
                 </h3>
-                <p className="text-sm text-gray-500 mb-3">@{profile?.username}</p>
+                <p className="text-sm text-gray-500 mb-1">@{profile?.username}</p>
+                <div className="flex items-center gap-1 mb-3">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="text-xs text-green-600 font-medium">Active</span>
+                </div>
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                   {profile?.bio || "No bio yet"}
                 </p>
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="bg-gray-50 rounded-lg p-2 text-center">
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition">
+                    <p className="text-lg font-bold text-gray-900">{userPostsCount}</p>
+                    <p className="text-xs text-gray-500">Posts</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition">
                     <p className="text-lg font-bold text-gray-900">{profile?.followersCount || 0}</p>
                     <p className="text-xs text-gray-500">Followers</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-2 text-center">
+                  <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition">
                     <p className="text-lg font-bold text-gray-900">{profile?.followingCount || 0}</p>
                     <p className="text-xs text-gray-500">Following</p>
                   </div>
@@ -282,7 +415,7 @@ const Dashboard = () => {
                   to={`/profile/${userId}`}
                   className="flex items-center justify-center gap-2 w-full py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
                 >
-                  View Profile
+                  View Full Profile
                   <FaArrowRight size={10} />
                 </Link>
               </div>

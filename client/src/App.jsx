@@ -17,8 +17,8 @@ import Settings from "./pages/Settings";
 import Search from "./pages/Search";
 import Topic from "./pages/Topic";
 import Notifications from "./pages/Notifications";
+import People from "./pages/People";
 import NotFound from "./pages/Notfind";
-
 const RequireAuth = ({ children }) => {
   const token = localStorage.getItem("token");
   return token ? children : <Navigate to="/login" />;
@@ -33,6 +33,7 @@ function App() {
         <Route path="post/:id" element={<PostView />} />
         <Route path="profile/:id" element={<Profile />} />
         <Route path="topic/:slug" element={<Topic />} />
+        <Route path="people" element={<People />} />
       </Route>
       {/* Auth pages */}
       <Route element={<AuthLayout />}>
@@ -57,11 +58,9 @@ function App() {
         <Route path="/search" element={<Search />} />
         <Route path="/notifications" element={<Notifications />} />
       </Route>
-
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
-
 export default App;

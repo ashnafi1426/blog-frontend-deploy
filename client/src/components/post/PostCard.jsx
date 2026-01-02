@@ -1,11 +1,18 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import ClapButton from "../like/ClapButton";
 import BookmarkButton from "../ui/BookmarkButton";
+import FollowButton from "../ui/FollowButton";
+import CommentForm from "../comment/CommentForm";
 import { FaRegComment, FaRegClock } from "react-icons/fa";
 
 const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
+  const [showCommentForm, setShowCommentForm] = useState(false);
   const author = post.users || {};
   const topics = post.post_topics?.map(pt => pt.topics).filter(Boolean) || [];
+  
+  // Use post_number if available, fallback to post_id
+  const postUrl = post.post_number ? `/post/${post.post_number}` : `/post/${post.post_id}`;
   
   const getPreview = (html, maxLength = 120) => {
     const text = html?.replace(/<[^>]*>/g, '') || '';
@@ -29,7 +36,7 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
     <article className={`group ${cardStyles[variant] || cardStyles.default}`}>
       {/* Cover image - full width on top if exists */}
       {post.cover_image && (
-        <Link to={`/post/${post.post_id}`} className="block mb-4 -mx-6 -mt-6">
+        <Link to={postUrl} className="block mb-4 -mx-6 -mt-6">
           <img
             src={post.cover_image}
             alt={post.title}
@@ -40,37 +47,45 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
 
       {/* Author info */}
       {showAuthor && (
-        <div className="flex items-center gap-3 mb-4">
-          <Link to={`/profile/${author.user_id}`}>
-            <img
-              src={author.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author.username}`}
-              alt={author.display_name || author.username}
-              className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
-            />
-          </Link>
-          <div>
-            <Link 
-              to={`/profile/${author.user_id}`}
-              className="font-semibold text-white hover:text-green-400 transition block"
-            >
-              {author.display_name || author.username}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Link to={`/profile/${author.user_id}`}>
+              <img
+                src={author.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author.username}`}
+                alt={author.display_name || author.username}
+                className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
+              />
             </Link>
-            <span className="text-sm text-gray-400">
-              {formatDate(post.published_at || post.created_at)}
-            </span>
+            <div>
+              <Link 
+                to={`/profile/${author.user_id}`}
+                className="font-semibold text-white hover:text-green-400 transition block"
+              >
+                {author.display_name || author.username}
+              </Link>
+              <span className="text-sm text-gray-400">
+                {formatDate(post.published_at || post.created_at)}
+              </span>
+            </div>
           </div>
+          <FollowButton 
+            userId={author.user_id} 
+            size="sm" 
+            variant="outline"
+            className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500"
+          />
         </div>
       )}
 
       {/* Title */}
-      <Link to={`/post/${post.post_id}`}>
+      <Link to={postUrl}>
         <h2 className="text-xl font-bold text-white mb-2 group-hover:text-green-400 transition-colors line-clamp-2">
           {post.title || "Untitled"}
         </h2>
       </Link>
 
       {/* Subtitle or preview */}
-      <Link to={`/post/${post.post_id}`}>
+      <Link to={postUrl}>
         <p className="text-gray-300 mb-4 line-clamp-2 leading-relaxed">
           {post.subtitle || getPreview(post.content)}
         </p>
@@ -91,6 +106,44 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
         </div>
       )}
 
+      {/* Comments Preview */}
+      {post.comments && post.comments.length > 0 && (
+        <div className="mb-4 p-3 bg-gray-800 rounded-lg border border-gray-700">
+          <p className="text-xs font-semibold text-gray-400 mb-2 uppercase">Recent Comments</p>
+          <div className="space-y-2">
+            {post.comments.slice(0, 2).map((comment, idx) => (
+              <div key={idx} className="text-sm">
+                <p className="font-medium text-gray-200">
+                  {comment.users?.display_name || comment.users?.username || 'Anonymous'}
+                </p>
+                <p className="text-gray-400 line-clamp-2">
+                  {comment.content}
+                </p>
+              </div>
+            ))}
+            {post.comments.length > 2 && (
+              <p className="text-xs text-gray-500 pt-1">
+                +{post.comments.length - 2} more comment{post.comments.length - 2 !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Comment Form Toggle */}
+      {showCommentForm && (
+        <div className="mb-4">
+          <CommentForm 
+            postId={post.post_id}
+            onSuccess={() => {
+              setShowCommentForm(false);
+              // Optionally refresh comments here
+            }}
+            onCancel={() => setShowCommentForm(false)}
+          />
+        </div>
+      )}
+
       {/* Footer */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-700">
         <div className="flex items-center gap-4 text-sm text-gray-400">
@@ -98,18 +151,24 @@ const PostCard = ({ post, showAuthor = true, variant = "default" }) => {
             <FaRegClock size={14} />
             {post.reading_time || 1} min
           </span>
-          <Link 
-            to={`/post/${post.post_id}#comments`}
-            className="flex items-center gap-1 hover:text-green-400 transition"
+          <button
+            onClick={() => setShowCommentForm(!showCommentForm)}
+            className="flex items-center gap-1 hover:text-green-400 transition cursor-pointer"
           >
             <FaRegComment size={14} />
             {post.comments_count || 0}
-          </Link>
+          </button>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
           <ClapButton postId={post.post_id} />
+          <Link
+            to={`/post/${post.post_id}`}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition"
+          >
+            Read Story
+          </Link>
           <BookmarkButton postId={post.post_id} />
         </div>
       </div>

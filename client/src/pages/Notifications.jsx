@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNotifications, markAsRead, markAllAsRead } from "../services/notificationService";
-import { FaBell, FaArrowLeft } from "react-icons/fa";
+import { FaBell, FaArrowLeft, FaHeart, FaComment, FaUserPlus } from "react-icons/fa";
 
 const Notifications = () => {
   const navigate = useNavigate();
@@ -49,6 +49,36 @@ const Notifications = () => {
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (err) {
       console.error("Failed to mark all as read:", err);
+    }
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'like':
+      case 'clap':
+        return <FaHeart className="text-red-500" size={18} />;
+      case 'comment':
+      case 'reply':
+        return <FaComment className="text-blue-500" size={18} />;
+      case 'follow':
+        return <FaUserPlus className="text-green-500" size={18} />;
+      default:
+        return <FaBell className="text-gray-500" size={18} />;
+    }
+  };
+
+  const getNotificationColor = (type) => {
+    switch (type) {
+      case 'like':
+      case 'clap':
+        return 'bg-red-50 border-red-200';
+      case 'comment':
+      case 'reply':
+        return 'bg-blue-50 border-blue-200';
+      case 'follow':
+        return 'bg-green-50 border-green-200';
+      default:
+        return 'bg-gray-50 border-gray-200';
     }
   };
 
@@ -168,13 +198,21 @@ const Notifications = () => {
             filteredNotifications.map((notification) => (
               <div
                 key={notification.notification_id}
-                onClick={() => !notification.is_read && handleMarkRead(notification.notification_id)}
+                onClick={() => {
+                  if (!notification.is_read) handleMarkRead(notification.notification_id);
+                  const link = getNotificationLink(notification);
+                  if (link !== '#') window.location.href = link;
+                }}
                 className={`
-                  bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition cursor-pointer
-                  ${!notification.is_read ? 'bg-green-50 border-green-200' : ''}
+                  rounded-lg shadow-sm border p-4 hover:shadow-md transition cursor-pointer
+                  ${getNotificationColor(notification.type)}
+                  ${!notification.is_read ? 'border-opacity-100' : 'border-opacity-50'}
                 `}
               >
                 <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 mt-1">
+                    {getNotificationIcon(notification.type)}
+                  </div>
                   <img
                     src={notification.actor?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=default`}
                     alt=""

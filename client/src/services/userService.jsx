@@ -108,6 +108,14 @@ export const getUserBookmarks = async (userId, token) => {
   return res.json();
 };
 
+// Get user statistics
+export const getUserStats = async (userId, token) => {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const res = await fetch(`${BASE_URL}/api/users/${userId}/stats`, { headers });
+  if (!res.ok) throw new Error("Failed to fetch user stats");
+  return res.json();
+};
+
 // Get user's reading history
 export const getUserReadingHistory = async (userId, token) => {
   const res = await fetch(`${BASE_URL}/api/users/${userId}/history`, {
